@@ -15,8 +15,10 @@ serve(async (req) => {
 
   try {
     const { email, username, password, role } = await req.json();
+    console.log(`🔐 Processing signup completion for email: ${email}, username: ${username}, role: ${role}`);
     
     if (!email || !username || !password || !role) {
+      console.error('❌ Missing required fields');
       return new Response(
         JSON.stringify({ success: false, message: "All fields are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -29,6 +31,7 @@ serve(async (req) => {
     );
 
     // Check if user exists and get their assigned role
+    console.log(`🔍 Looking up user by email: ${email}`);
     const { data: existingUser, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -36,14 +39,18 @@ serve(async (req) => {
       .single();
 
     if (userError || !existingUser) {
+      console.error('❌ User not found:', userError?.message);
       return new Response(
         JSON.stringify({ success: false, message: "User not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log(`✅ User found with assigned role: ${existingUser.role}`);
+
     // Check if the role matches
     if (existingUser.role.toLowerCase() !== role.toLowerCase()) {
+      console.error(`❌ Role mismatch. Expected: ${existingUser.role}, Provided: ${role}`);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -54,6 +61,7 @@ serve(async (req) => {
     }
 
     // Check if username is already taken
+    console.log(`🔍 Checking if username is available: ${username}`);
     const { data: usernameCheck } = await supabase
       .from('users')
       .select('username')
@@ -61,16 +69,22 @@ serve(async (req) => {
       .neq('email', email);
 
     if (usernameCheck && usernameCheck.length > 0) {
+      console.error(`❌ Username already taken: ${username}`);
       return new Response(
         JSON.stringify({ success: false, message: "Username is already taken" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Hash the password
+    console.log('✅ Username is available');
+
+    // Hash the password using bcrypt
+    console.log('🔐 Hashing password...');
     const hashedPassword = await bcrypt.hash(password);
+    console.log('✅ Password hashed successfully');
 
     // Update user with username and hashed password
+    console.log('💾 Updating user record...');
     const { error: updateError } = await supabase
       .from('users')
       .update({
@@ -80,12 +94,14 @@ serve(async (req) => {
       .eq('email', email);
 
     if (updateError) {
-      console.error('Update error:', updateError);
+      console.error('❌ Update error:', updateError);
       return new Response(
         JSON.stringify({ success: false, message: "Failed to complete signup" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log('✅ User record updated successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -101,9 +117,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in complete-signup:', error);
+    console.error('❌ Unexpected error in complete-signup:', error);
     return new Response(
-      JSON.stringify({ success: false, message: "Internal server error" }),
+      JSON.stringify({ success: false, message: "Internal server error", error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
