@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
+import SetupAccount from "./pages/SetupAccount";
 import Assistant from "./pages/Assistant";
 import NotFound from "./pages/NotFound";
 
