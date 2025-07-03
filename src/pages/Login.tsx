@@ -8,13 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Bot, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -31,59 +30,36 @@ const Login = () => {
       });
       return;
     }
-
-    setIsLoading(true);
-
-    try {
-      console.log('🔐 Attempting secure login...');
-      
-      // Use the new secure-login edge function
-      const { data, error } = await supabase.functions.invoke('secure-login', {
-        body: {
-          username: formData.username,
-          password: formData.password,
-          role: formData.role
-        }
+   try {
+      const response = await fetch("http://127.0.0.1:9001/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+      const result = await response.json();
 
-      if (error) {
-        console.error('❌ Login function error:', error);
-        throw error;
-      }
-
-      if (data.success) {
-        console.log('✅ Login successful:', data.user);
-        
-        // Save username to localStorage for session management
-        localStorage.setItem("username", formData.username);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userId", data.user.user_id.toString());
-        
-        toast({
-          title: "Welcome back!",
-          description: "Logging you in..."
-        });
-        
-        setTimeout(() => {
-          navigate('/assistant');
-        }, 1000);
-      } else {
-        console.error('❌ Login failed:', data.message);
+      if (result.success) {
+  localStorage.setItem("username", formData.username); // Save username
+  toast({
+    title: "Welcome back!",
+    description: "Logging you in..."
+  });
+  setTimeout(() => {
+    navigate('/assistant');
+  }, 1000);
+} else {
         toast({
           title: "Invalid Credentials",
-          description: data.message || "Username, password, or role is incorrect.",
+          description: result.message || "Username, password, or role is incorrect.",
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('❌ Login error:', error);
       toast({
         title: "Login Failed",
         description: "Could not connect to server.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -115,10 +91,9 @@ const Login = () => {
                   name="username"
                   placeholder="Enter your username"
                   value={formData.username}
-                  autoComplete="new-username"
+                    autoComplete="new-username"
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
                   className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
-                  disabled={isLoading}
                 />
               </div>
 
@@ -136,7 +111,6 @@ const Login = () => {
                     autoComplete="new-password"  
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500 pr-10"
-                    disabled={isLoading}
                   />
                   <Button
                     type="button"
@@ -144,7 +118,6 @@ const Login = () => {
                     size="sm"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -155,18 +128,15 @@ const Login = () => {
                 <Label htmlFor="role" className="text-sm font-medium text-gray-700">
                   Role
                 </Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value) => setFormData({...formData, role: value})}
-                  disabled={isLoading}
-                >
+                <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
                   <SelectTrigger className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500">
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="dealer">Dealer</SelectItem>
-                    <SelectItem value="sales_rep">Sales Rep</SelectItem>
+                    <SelectItem value="sales_rep">Salesrep</SelectItem>
+
                   </SelectContent>
                 </Select>
               </div>
@@ -175,7 +145,6 @@ const Login = () => {
                 <button
                   type="button"
                   className="text-purple-600 hover:text-purple-700 font-medium"
-                  disabled={isLoading}
                 >
                   Forgot Password?
                 </button>
@@ -183,10 +152,9 @@ const Login = () => {
 
               <Button
                 type="submit"
-                disabled={isLoading}
                 className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium rounded-lg shadow-lg"
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                Sign In
               </Button>
 
               <div className="text-center text-sm text-gray-600">
@@ -195,7 +163,6 @@ const Login = () => {
                   type="button"
                   onClick={() => navigate('/signup')}
                   className="text-purple-600 hover:text-purple-700 font-medium"
-                  disabled={isLoading}
                 >
                   Sign up
                 </button>

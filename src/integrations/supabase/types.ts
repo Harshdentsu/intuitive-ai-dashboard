@@ -233,37 +233,37 @@ export type Database = {
       }
       orders: {
         Row: {
-          dealer_id: number
-          order_date: string
+          dealer_id: number | null
+          order_date: string | null
           order_id: number
-          product_id: string
+          product_id: string | null
           quantity: number
-          sales_rep_id: number
-          total_cost: number
-          unit_price: number
-          warehouse_id: number
+          sales_rep_id: number | null
+          total_cost: number | null
+          unit_price: number | null
+          warehouse_id: number | null
         }
         Insert: {
-          dealer_id: number
-          order_date?: string
+          dealer_id?: number | null
+          order_date?: string | null
           order_id?: number
-          product_id: string
+          product_id?: string | null
           quantity: number
-          sales_rep_id: number
-          total_cost: number
-          unit_price: number
-          warehouse_id: number
+          sales_rep_id?: number | null
+          total_cost?: number | null
+          unit_price?: number | null
+          warehouse_id?: number | null
         }
         Update: {
-          dealer_id?: number
-          order_date?: string
+          dealer_id?: number | null
+          order_date?: string | null
           order_id?: number
-          product_id?: string
+          product_id?: string | null
           quantity?: number
-          sales_rep_id?: number
-          total_cost?: number
-          unit_price?: number
-          warehouse_id?: number
+          sales_rep_id?: number | null
+          total_cost?: number | null
+          unit_price?: number | null
+          warehouse_id?: number | null
         }
         Relationships: [
           {
@@ -434,32 +434,26 @@ export type Database = {
         Row: {
           dealer_id: number | null
           email: string
-          is_verified: boolean | null
           password: string
           role: string
           user_id: number
           username: string
-          verification_token: string | null
         }
         Insert: {
           dealer_id?: number | null
           email: string
-          is_verified?: boolean | null
           password: string
           role: string
           user_id?: number
           username: string
-          verification_token?: string | null
         }
         Update: {
           dealer_id?: number | null
           email?: string
-          is_verified?: boolean | null
           password?: string
           role?: string
           user_id?: number
           username?: string
-          verification_token?: string | null
         }
         Relationships: [
           {
@@ -483,21 +477,21 @@ export type Database = {
           description: string
           embedding: string
           id: number
-          metadata: Json
+          metadata: Json | null
           table_join: string
         }
         Insert: {
           description: string
           embedding: string
           id?: number
-          metadata?: Json
+          metadata?: Json | null
           table_join: string
         }
         Update: {
           description?: string
           embedding?: string
           id?: number
-          metadata?: Json
+          metadata?: Json | null
           table_join?: string
         }
         Relationships: []
