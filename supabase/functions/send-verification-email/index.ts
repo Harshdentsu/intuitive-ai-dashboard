@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,19 +70,18 @@ serve(async (req) => {
 
     console.log(`✅ Token created successfully: ${tokenData.token}`);
 
-    // Get SendGrid credentials
-    const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
-    const emailSender = Deno.env.get('EMAIL_SENDER');
-    
-    if (!sendgridApiKey || !emailSender) {
-      console.error('❌ SendGrid credentials not found in environment variables');
+    // Initialize Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      console.error('❌ RESEND_API_KEY not found in environment variables');
       return new Response(
         JSON.stringify({ success: false, message: "Email service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log('📮 Initializing SendGrid with API key...');
+    console.log('📮 Initializing Resend with API key...');
+    const resend = new Resend(resendApiKey);
     
     // Get the origin from request headers
     const origin = req.headers.get('origin') || 'http://localhost:3000';
@@ -89,58 +89,33 @@ serve(async (req) => {
     
     console.log(`🔗 Verification URL: ${verificationUrl}`);
 
-    // Send verification email using SendGrid API
+    // Send verification email
     console.log(`📤 Sending verification email to: ${email}`);
     
     try {
-      const sendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${sendgridApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personalizations: [
-            {
-              to: [{ email: email }],
-              subject: 'Verify your email - Wheely Assistant',
-            }
-          ],
-          from: {
-            email: emailSender,
-            name: 'Wheely Assistant'
-          },
-          content: [
-            {
-              type: 'text/html',
-              value: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h1 style="color: #7c3aed;">Verify Your Email</h1>
-                  <p>Welcome to Wheely Assistant! Please click the link below to verify your email and complete your signup:</p>
-                  <a href="${verificationUrl}" style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-                    Verify Email
-                  </a>
-                  <p style="color: #666; font-size: 14px;">This link will expire in 15 minutes.</p>
-                  <p style="color: #666; font-size: 12px;">If you didn't request this, please ignore this email.</p>
-                  <hr style="margin: 20px 0; border: 1px solid #eee;">
-                  <p style="color: #999; font-size: 11px;">
-                    Verification Token: ${tokenData.token}<br>
-                    This email was sent to: ${email}
-                  </p>
-                </div>
-              `
-            }
-          ]
-        })
+      const emailResponse = await resend.emails.send({
+        from: 'Wheely Assistant <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Verify your email - Wheely Assistant',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #7c3aed;">Verify Your Email</h1>
+            <p>Welcome to Wheely Assistant! Please click the link below to verify your email and complete your signup:</p>
+            <a href="${verificationUrl}" style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Verify Email
+            </a>
+            <p style="color: #666; font-size: 14px;">This link will expire in 15 minutes.</p>
+            <p style="color: #666; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+            <hr style="margin: 20px 0; border: 1px solid #eee;">
+            <p style="color: #999; font-size: 11px;">
+              Verification Token: ${tokenData.token}<br>
+              This email was sent to: ${email}
+            </p>
+          </div>
+        `,
       });
 
-      if (!sendgridResponse.ok) {
-        const errorData = await sendgridResponse.text();
-        console.error('❌ SendGrid API error:', errorData);
-        throw new Error(`SendGrid API error: ${sendgridResponse.status} - ${errorData}`);
-      }
-
-      console.log('✅ Email sent successfully via SendGrid');
+      console.log('✅ Email sent successfully:', JSON.stringify(emailResponse, null, 2));
 
       return new Response(
         JSON.stringify({ success: true, message: "Verification email sent" }),
@@ -148,8 +123,9 @@ serve(async (req) => {
       );
 
     } catch (emailError) {
-      console.error('❌ SendGrid API error:', JSON.stringify(emailError, null, 2));
+      console.error('❌ Resend API error:', JSON.stringify(emailError, null, 2));
       
+      // Return more specific error information
       return new Response(
         JSON.stringify({ 
           success: false, 
