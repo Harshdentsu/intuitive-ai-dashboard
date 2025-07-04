@@ -64,10 +64,10 @@ const Signup = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+            <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
               <Mail className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h1>
@@ -78,7 +78,7 @@ const Signup = () => {
             <CardContent className="p-8 text-center">
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Verification email sent to:</h3>
-                <p className="text-purple-600 font-medium">{email}</p>
+                <p className="text-orange-600 font-medium">{email}</p>
               </div>
               
               <div className="space-y-4">
@@ -111,7 +111,7 @@ const Signup = () => {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="text-purple-600 hover:text-purple-700 font-medium"
+              className="text-orange-600 hover:text-orange-700 font-medium"
             >
               Sign in
             </button>
@@ -122,10 +122,10 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
             <Bot className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
@@ -149,7 +149,7 @@ const Signup = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                  className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                   disabled={isLoading}
                 />
               </div>
@@ -157,7 +157,7 @@ const Signup = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium rounded-lg shadow-lg"
+                className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-lg"
               >
                 {isLoading ? "Sending..." : "Send Verification Link"}
               </Button>
@@ -168,7 +168,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="text-purple-600 hover:text-purple-700 font-medium"
+                className="text-orange-600 hover:text-orange-700 font-medium"
               >
                 Sign in
               </button>
