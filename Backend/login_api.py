@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from supabase_client import supabase  # ✅ import your Supabase client
 from rag import authenticate_user, current_user, process_user_query  # Import your RAG logic
 from rag import UserSession 
+from passlib.hash import bcrypt
+
 app = FastAPI()
 
 app.add_middleware(
@@ -48,25 +50,36 @@ async def login(request: Request):
         username = username.strip()
         password = password.strip()
         role = role.strip().lower()
-        # ✅ Query the users table
+        # ✅ Query the users table by username only
         result = supabase.table("users").select("*") \
             .eq("username", username) \
-            .eq("password", password) \
-            .eq("role", role) \
             .execute()
 
         print("🔍 Supabase result:", result)
 
         if result.data and len(result.data) > 0:
+            user = result.data[0]
+            # Check password hash
+            if not bcrypt.verify(password, user["password"]):
+                return {
+                    "success": False,
+                    "message": "Invalid credentials (password mismatch)"
+                }
+            # Check role
+            if user["role"].strip().lower() != role:
+                return {
+                    "success": False,
+                    "message": "Invalid credentials (role mismatch)"
+                }
             return {
                 "success": True,
                 "message": "Login successful",
-                "user": result.data[0]
+                "user": user
             }
         else:
             return {
                 "success": False,
-                "message": "Invalid credentials"
+                "message": "Invalid credentials (user not found)"
             }
 
     except Exception as e:
@@ -116,3 +129,43 @@ async def query(request: Request):
     except Exception as e:
         print(f"🔥 [ERROR] Exception occurred in /api/query: {e}")
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
+
+@app.post("/api/setup-account")
+async def setup_account(request: Request):
+    data = await request.json()
+    email = data["email"]
+    username = data["username"]
+    password = data["password"]
+    role = data["role"]
+
+    # 1. Fetch the user by email
+    response = supabase.table("users").select("role, is_verified").eq("email", email).single().execute()
+    user = None
+    if hasattr(response, "data"):
+        user = response.data
+    elif isinstance(response, dict):
+        user = response.get("data")
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User with this email does not exist.")
+
+    # 2. Check if the user is verified
+    if not user.get("is_verified", False):
+        raise HTTPException(status_code=403, detail="Email not verified.")
+
+    # 3. Check if the role matches
+    if user["role"].strip().lower() != role.strip().lower():
+        raise HTTPException(status_code=403, detail="Role does not match the assigned role.")
+
+    # 4. If all checks pass, update username and password
+    hashed_password = bcrypt.hash(password)
+    update_response = supabase.table("users").update({
+        "username": username,
+        "password": hashed_password
+    }).eq("email", email).execute()
+
+    # Check for update errors
+    if hasattr(update_response, "error") and update_response.error is not None:
+        raise HTTPException(status_code=400, detail=str(update_response.error))
+
+    return {"success": True}
