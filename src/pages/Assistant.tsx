@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,31 +6,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
-  Bot,
-  Send,
-  Menu,
-  X,
+  MessageSquare,
+  MoreHorizontal,
   Plus,
   Search,
-  MoreHorizontal,
-  User,
-  Settings,
-  LogOut,
-  MessageSquare,
-  Sparkles,
-  Moon,
-  Sun,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
-import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
 
 interface Message {
   id: string;
@@ -49,29 +33,12 @@ interface Chat {
 }
 
 const Assistant = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentInput, setCurrentInput] = useState("");
   const [currentChatId, setCurrentChatId] = useState("1");
-  const [isTyping, setIsTyping] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [animatedContent, setAnimatedContent] = useState("");
-  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(
-    null
-  );
-
-  const rawUsername = "harsh.dealer";
-  const firstName = rawUsername.split(".")[0];
-  const lastName = rawUsername.split(".")[1];
-  const initials = `${firstName[0]?.toUpperCase()}${lastName[0]?.toUpperCase()}`;
-  const displayName =
-    firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-
+  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [chats, setChats] = useState<Chat[]>([
@@ -91,10 +58,6 @@ const Assistant = () => {
       chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const hasMessages = currentChat?.messages.length > 0;
-  const showGreeting =
-    !hasMessages && !inputFocused && !currentInput.trim();
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentChat?.messages.length]);
@@ -102,7 +65,6 @@ const Assistant = () => {
   const animateMarkdownMessage = (fullText: string, messageId: string) => {
     setAnimatedContent("");
     setAnimatingMessageId(messageId);
-
     let i = 0;
     const chunkSize = 4;
     const interval = setInterval(() => {
@@ -129,24 +91,17 @@ const Assistant = () => {
     setChats((prev) =>
       prev.map((chat) =>
         chat.id === currentChatId
-          ? {
-              ...chat,
-              messages: [...chat.messages, userMessage],
-            }
+          ? { ...chat, messages: [...chat.messages, userMessage] }
           : chat
       )
     );
 
     setCurrentInput("");
-    setInputFocused(false);
-    setIsTyping(true);
-    setShowRightPanel(true);
 
     setTimeout(() => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content:
-          "I'm here to help you with any questions. This is a simulated response.",
+        content: "This is a simulated AI response to your query.",
         sender: "assistant",
         timestamp: new Date(),
       };
@@ -159,16 +114,13 @@ const Assistant = () => {
             ? {
                 ...chat,
                 messages: [...chat.messages, assistantMessage],
-                lastMessage:
-                  assistantMessage.content.substring(0, 50) + "...",
-                title: userMessage.content.substring(0, 30) + "...",
+                lastMessage: assistantMessage.content.slice(0, 50) + "...",
+                title: userMessage.content.slice(0, 30) + "...",
               }
             : chat
         )
       );
-
-      setIsTyping(false);
-    }, 1200);
+    }, 1000);
   };
 
   const handleNewChat = () => {
@@ -179,124 +131,66 @@ const Assistant = () => {
       timestamp: new Date(),
       messages: [],
     };
-
     setChats((prev) => [newChat, ...prev]);
     setCurrentChatId(newChat.id);
-    setInputFocused(false);
     setCurrentInput("");
-    setShowRightPanel(false);
-
-    toast({
-      title: "New Thread Created",
-      description: "Start a fresh conversation",
-    });
   };
 
   const handleDeleteChat = (chatId: string) => {
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-    if (currentChatId === chatId && chats.length > 1) {
-      setCurrentChatId(chats.find((chat) => chat.id !== chatId)?.id || "");
+    const updated = chats.filter((chat) => chat.id !== chatId);
+    setChats(updated);
+    if (currentChatId === chatId && updated.length > 0) {
+      setCurrentChatId(updated[0].id);
     }
-
-    toast({
-      title: "Thread Deleted",
-      description: "The conversation has been removed",
-    });
   };
-
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-    navigate("/login");
-  };
-
-  const handleSuggestedQuery = (query: string) => {
-    setCurrentInput(query);
-    setInputFocused(true);
-    setShowRightPanel(true);
-  };
-
-  const suggestedQueries = [
-    { text: "List all claims I've raised", icon: "📄" },
-    { text: "Specification about product UrbanBias", icon: "🔧" },
-    { text: "Available quantity of 100/45R29 73H in Mysore", icon: "🏬" },
-    { text: "Show me my sales.", icon: "📊" },
-  ];
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 dark:text-white flex overflow-hidden">
+    <div className="h-screen bg-gray-50 flex overflow-hidden text-black">
       {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-80" : "w-0"
-        } transition-all duration-300 bg-white dark:bg-gray-800 dark:text-white border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden shadow-sm`}
-      >
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <Button
-            onClick={handleNewChat}
-            className="w-full bg-black hover:bg-gray-800 text-white h-12 rounded-xl font-medium"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Thread
+      <div className={`w-80 transition-all bg-white border-r border-gray-200 flex flex-col`}>
+        <div className="p-4 border-b">
+          <Button onClick={handleNewChat} className="w-full h-10 rounded-md bg-black text-white">
+            <Plus className="h-4 w-4 mr-2" /> New Thread
           </Button>
         </div>
-
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-4 border-b">
           <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search thread"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-50 border-gray-200 h-10 rounded-lg focus:bg-white"
+              className="pl-10"
             />
           </div>
         </div>
-
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto">
           <ScrollArea className="h-full">
             <div className="p-2 space-y-1">
               {filteredChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
-                    currentChatId === chat.id
-                      ? "bg-gray-100 border border-gray-200"
-                      : ""
-                  }`}
                   onClick={() => setCurrentChatId(chat.id)}
+                  className={`group flex items-center justify-between p-3 rounded-md cursor-pointer hover:bg-gray-100 ${
+                    currentChatId === chat.id ? "bg-gray-100" : ""
+                  }`}
                 >
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <MessageSquare className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {chat.title}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-300 truncate">
-                        {chat.lastMessage || "No messages yet"}
-                      </div>
+                  <div className="flex items-center space-x-3 flex-1">
+                    <MessageSquare className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <div className="text-sm font-semibold">{chat.title}</div>
+                      <div className="text-xs text-gray-500">{chat.lastMessage || "No messages yet"}</div>
                     </div>
                   </div>
-
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                      >
-                        <MoreHorizontal className="h-3 w-3" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                        <MoreHorizontal className="h-4 w-4 text-gray-400" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg dark:text-white">
-                      <DropdownMenuItem>Rename Thread</DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteChat(chat.id)}
-                        className="text-red-600 dark:text-red-400"
-                      >
-                        Delete Thread
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleDeleteChat(chat.id)} className="text-red-600">
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -307,9 +201,43 @@ const Assistant = () => {
         </div>
       </div>
 
-      {/* Chat area will continue here... */}
-      {/* Add your existing chat UI from previous code after this line */}
-
+      {/* Chat area */}
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-auto p-6">
+          <div className="space-y-4">
+            {currentChat?.messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-xl px-4 py-2 rounded-lg text-sm ${
+                    msg.sender === "user"
+                      ? "bg-black text-white"
+                      : "bg-gray-200 text-black"
+                  }`}
+                >
+                  <ReactMarkdown>
+                    {animatingMessageId === msg.id ? animatedContent : msg.content}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+        <div className="p-4 border-t flex gap-2">
+          <Input
+            placeholder="Type your message"
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+          />
+          <Button onClick={handleSendMessage} className="bg-black text-white">
+            Send
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
