@@ -1,45 +1,38 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MessageSquare, Users, Zap, UserCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 const Index = () => {
   const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center p-4 ">
+  return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center p-4 ">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <div className="mx-auto mb-8 w-max h-max mt-27 rounded-full flex items-center justify-center">
-          <img src="public/flogo.png" alt="Wheely Logo" className="h-28 w-50" />
+          <img alt="Wheely Logo" className="h-28 w-50" src="/lovable-uploads/d3339318-3ea0-4a45-b1da-59798d4a28a2.png" />
              
           </div>
-          <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}>
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.6
+        }}>
   <p className="text-md text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
     An intelligent assistant built to simplify workflows, answer queries, and empower teams
     across sales, service, and inventory in the tyre manufacturing industry.
   </p>
-</motion.div>
+        </motion.div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button 
-              onClick={() => navigate('/login')}
-              size="lg"
-              className="bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-700
-  text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 h-14"
-            >
+            <Button onClick={() => navigate('/login')} size="lg" className="bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-700
+  text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 h-14">
               Get Started
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             
-            <Button 
-              onClick={() => navigate('/signup')}
-              variant="outline"
-              size="lg"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 rounded-xl font-semibold transition-all duration-200 h-14"
-            >
+            <Button onClick={() => navigate('/signup')} variant="outline" size="lg" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 rounded-xl font-semibold transition-all duration-200 h-14">
               Create Account
             </Button>
           </div>
@@ -75,8 +68,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
