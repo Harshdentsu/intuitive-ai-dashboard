@@ -20,7 +20,7 @@ const Login = () => {
     role: ""
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!formData.username || !formData.password || !formData.role) {
@@ -34,66 +34,30 @@ const Login = () => {
 
   setIsLoading(true);
 
-  try {
-    // 🔐 Hardcoded login check for harsh
-    if (
-      formData.username === "harsh" &&
-      formData.password === "harsh" &&
-      formData.role === "dealer"
-    ) {
-      localStorage.setItem("username", "harsh");
-      localStorage.setItem("userRole", "dealer");
+  // 🔐 Hardcoded login check
+  if (
+    formData.username === "harsh" &&
+    formData.password === "harsh" &&
+    formData.role === "dealer"
+  ) {
+    localStorage.setItem("username", "harsh");
+    localStorage.setItem("userRole", "dealer");
 
-      toast({
-        title: "Welcome Harsh!",
-        description: "Access granted. Redirecting...",
-      });
-
-      setTimeout(() => {
-        navigate("/assistant");
-      }, 1000);
-
-      return;
-    }
-
-    // ❌ If not harsh, do normal API login
-    const response = await fetch("http://localhost:8000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    const data = await response.json();
-
-    if (data.success) {
-      localStorage.setItem("username", data.user.username);
-      localStorage.setItem("userRole", data.user.role);
-      localStorage.setItem("userId", data.user.user_id?.toString() || "");
-
-      toast({
-        title: "Welcome back!",
-        description: "Logging you in...",
-      });
-
-      setTimeout(() => {
-        navigate("/assistant");
-      }, 1000);
-    } else {
-      toast({
-        title: "Invalid Credentials",
-        description: data.message || "Username, password, or role is incorrect.",
-        variant: "destructive",
-      });
-    }
-  } catch (error) {
-    console.error("❌ Login error:", error);
     toast({
-      title: "Login Failed",
-      description: "Could not connect to server.",
-      variant: "destructive",
+      title: "Welcome Harsh!",
+      description: "Access granted. Redirecting...",
     });
-  } finally {
-    setIsLoading(false);
+
+    navigate("/assistant"); // 🔁 Direct navigation
+  } else {
+    toast({
+      title: "Access Denied",
+      description: "Only Harsh with role dealer is allowed.",
+      variant: "destructive"
+    });
   }
+
+  setIsLoading(false);
 };
 
   return (
