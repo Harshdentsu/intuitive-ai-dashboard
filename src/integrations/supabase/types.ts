@@ -12,29 +12,35 @@ export type Database = {
       claim: {
         Row: {
           amount: number
+          approved_amount: number | null
           claim_date: string
-          claim_id: string
-          dealer_id: string
+          claim_id: number
+          dealer_id: number
           product_id: string
           reason: string | null
+          resolved_date: string | null
           status: string
         }
         Insert: {
           amount: number
+          approved_amount?: number | null
           claim_date: string
-          claim_id: string
-          dealer_id: string
+          claim_id?: number
+          dealer_id: number
           product_id: string
           reason?: string | null
+          resolved_date?: string | null
           status: string
         }
         Update: {
           amount?: number
+          approved_amount?: number | null
           claim_date?: string
-          claim_id?: string
-          dealer_id?: string
+          claim_id?: number
+          dealer_id?: number
           product_id?: string
           reason?: string | null
+          resolved_date?: string | null
           status?: string
         }
         Relationships: [
@@ -44,6 +50,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dealer"
             referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "claim_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "claim_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "claim_product_id_fkey"
@@ -58,40 +78,37 @@ export type Database = {
         Row: {
           ai_response: string | null
           created_at: string | null
-          dealer_id: string | null
+          dealer_id: number | null
           log_id: number
           metadata: Json | null
           query_timestamp: string | null
           query_type: string | null
-          sales_rep_id: string | null
           session_id: string | null
-          user_id: string | null
+          user_id: number | null
           user_query: string
         }
         Insert: {
           ai_response?: string | null
           created_at?: string | null
-          dealer_id?: string | null
+          dealer_id?: number | null
           log_id?: number
           metadata?: Json | null
           query_timestamp?: string | null
           query_type?: string | null
-          sales_rep_id?: string | null
           session_id?: string | null
-          user_id?: string | null
+          user_id?: number | null
           user_query: string
         }
         Update: {
           ai_response?: string | null
           created_at?: string | null
-          dealer_id?: string | null
+          dealer_id?: number | null
           log_id?: number
           metadata?: Json | null
           query_timestamp?: string | null
           query_type?: string | null
-          sales_rep_id?: string | null
           session_id?: string | null
-          user_id?: string | null
+          user_id?: number | null
           user_query?: string
         }
         Relationships: [
@@ -103,73 +120,107 @@ export type Database = {
             referencedColumns: ["dealer_id"]
           },
           {
+            foreignKeyName: "conversation_logs_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "conversation_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "conversation_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "fk_conversation_sales_rep"
-            columns: ["sales_rep_id"]
-            isOneToOne: false
-            referencedRelation: "sales_reps"
-            referencedColumns: ["sales_rep_id"]
-          },
         ]
       }
       dealer: {
         Row: {
-          dealer_id: string
+          dealer_id: number
           name: string
-          sales_rep_id: string | null
-          zone: string | null
         }
         Insert: {
-          dealer_id: string
+          dealer_id?: number
           name: string
-          sales_rep_id?: string | null
-          zone?: string | null
         }
         Update: {
-          dealer_id?: string
+          dealer_id?: number
           name?: string
-          sales_rep_id?: string | null
-          zone?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_dealers_sales_rep"
-            columns: ["sales_rep_id"]
-            isOneToOne: false
-            referencedRelation: "sales_reps"
-            referencedColumns: ["sales_rep_id"]
-          },
-        ]
+        Relationships: []
+      }
+      email_tokens: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean | null
+        }
+        Relationships: []
       }
       inventory: {
         Row: {
           product_id: string
           quantity: number
-          warehouse_id: string
+          warehouse_id: number
         }
         Insert: {
           product_id: string
           quantity: number
-          warehouse_id: string
+          warehouse_id: number
         }
         Update: {
           product_id?: string
           quantity?: number
-          warehouse_id?: string
+          warehouse_id?: number
         }
         Relationships: [
           {
             foreignKeyName: "inventory_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "product"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "inventory_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["warehouse_id"]
           },
           {
             foreignKeyName: "inventory_warehouse_id_fkey"
@@ -182,46 +233,39 @@ export type Database = {
       }
       orders: {
         Row: {
-          dealer_id: string
+          dealer_id: number
           order_date: string
-          order_id: string
+          order_id: number
           product_id: string
           quantity: number
-          sales_rep_id: string | null
+          sales_rep_id: number
           total_cost: number
           unit_price: number
           warehouse_id: number
         }
         Insert: {
-          dealer_id: string
+          dealer_id: number
           order_date?: string
-          order_id: string
+          order_id?: number
           product_id: string
           quantity: number
-          sales_rep_id?: string | null
+          sales_rep_id: number
           total_cost: number
           unit_price: number
           warehouse_id: number
         }
         Update: {
-          dealer_id?: string
+          dealer_id?: number
           order_date?: string
-          order_id?: string
+          order_id?: number
           product_id?: string
           quantity?: number
-          sales_rep_id?: string | null
+          sales_rep_id?: number
           total_cost?: number
           unit_price?: number
           warehouse_id?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_orders_sales_rep"
-            columns: ["sales_rep_id"]
-            isOneToOne: false
-            referencedRelation: "sales_reps"
-            referencedColumns: ["sales_rep_id"]
-          },
           {
             foreignKeyName: "orders_dealer_id_fkey"
             columns: ["dealer_id"]
@@ -230,11 +274,53 @@ export type Database = {
             referencedColumns: ["dealer_id"]
           },
           {
+            foreignKeyName: "orders_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "orders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "product"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "orders_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "orders_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "orders_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "orders_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["warehouse_id"]
           },
         ]
       }
@@ -271,71 +357,123 @@ export type Database = {
         }
         Relationships: []
       }
-      sales_reps: {
+      sales: {
         Row: {
-          name: string
-          sales_rep_id: string
-          zone: string | null
+          cost: number
+          date: string
+          dealer_id: number
+          product_id: string
+          quantity: number
+          sales_id: number
+          warehouse_id: number
         }
         Insert: {
-          name: string
-          sales_rep_id: string
-          zone?: string | null
+          cost: number
+          date: string
+          dealer_id: number
+          product_id: string
+          quantity: number
+          sales_id: number
+          warehouse_id: number
         }
         Update: {
-          name?: string
-          sales_rep_id?: string
-          zone?: string | null
+          cost?: number
+          date?: string
+          dealer_id?: number
+          product_id?: string
+          quantity?: number
+          sales_id?: number
+          warehouse_id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealer"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "sales_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sales_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "sales_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["warehouse_id"]
+          },
+        ]
       }
       users: {
         Row: {
-          dealer_id: string | null
+          dealer_id: number | null
           email: string
           is_verified: boolean | null
           password: string
           role: string
-          sales_rep_id: string | null
-          user_id: string
+          user_id: number
           username: string
           verification_token: string | null
         }
         Insert: {
-          dealer_id?: string | null
+          dealer_id?: number | null
           email: string
           is_verified?: boolean | null
           password: string
           role: string
-          sales_rep_id?: string | null
-          user_id: string
+          user_id?: number
           username: string
           verification_token?: string | null
         }
         Update: {
-          dealer_id?: string | null
+          dealer_id?: number | null
           email?: string
           is_verified?: boolean | null
           password?: string
           role?: string
-          sales_rep_id?: string | null
-          user_id?: string
+          user_id?: number
           username?: string
           verification_token?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_users_sales_rep"
-            columns: ["sales_rep_id"]
+            foreignKeyName: "users_dealer_id_fkey"
+            columns: ["dealer_id"]
             isOneToOne: false
-            referencedRelation: "sales_reps"
-            referencedColumns: ["sales_rep_id"]
+            referencedRelation: "dealer"
+            referencedColumns: ["dealer_id"]
           },
           {
             foreignKeyName: "users_dealer_id_fkey"
             columns: ["dealer_id"]
             isOneToOne: false
-            referencedRelation: "dealer"
+            referencedRelation: "user_dealer_view"
             referencedColumns: ["dealer_id"]
           },
         ]
@@ -367,24 +505,160 @@ export type Database = {
       warehouse: {
         Row: {
           location: string
-          warehouse_id: string
+          warehouse_id: number
           zone: string
         }
         Insert: {
           location: string
-          warehouse_id: string
+          warehouse_id?: number
           zone: string
         }
         Update: {
           location?: string
-          warehouse_id?: string
+          warehouse_id?: number
           zone?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      claim_dealer_view: {
+        Row: {
+          amount: number | null
+          approved_amount: number | null
+          claim_date: string | null
+          claim_id: number | null
+          dealer_id: number | null
+          dealer_name: string | null
+          product_id: string | null
+          reason: string | null
+          resolved_date: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealer"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "claim_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "claim_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "claim_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      inventory_view: {
+        Row: {
+          aspect_ratio: number | null
+          category: string | null
+          construction_type: string | null
+          location: string | null
+          price: number | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+          rim_diameter_inch: number | null
+          section_width: number | null
+          warehouse_id: number | null
+          zone: string | null
+        }
+        Relationships: []
+      }
+      sales_dealer_product_warehouse_view: {
+        Row: {
+          aspect_ratio: number | null
+          category: string | null
+          construction_type: string | null
+          cost: number | null
+          date: string | null
+          dealer_id: number | null
+          dealer_name: string | null
+          product_id: string | null
+          product_name: string | null
+          product_price: number | null
+          quantity: number | null
+          rim_diameter_inch: number | null
+          sales_id: number | null
+          section_width: number | null
+          warehouse_id: number | null
+          warehouse_location: string | null
+          warehouse_zone: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealer"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "sales_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "user_dealer_view"
+            referencedColumns: ["dealer_id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sales_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_view"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "sales_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["warehouse_id"]
+          },
+        ]
+      }
+      user_dealer_view: {
+        Row: {
+          dealer_id: number | null
+          dealer_name: string | null
+          email: string | null
+          role: string | null
+          user_id: number | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
