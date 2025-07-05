@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Bot, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -29,45 +30,77 @@ const Login = () => {
       });
       return;
     }
-   try {
-      const response = await fetch("http://127.0.0.1:9001/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
 
-      if (result.success) {
-        localStorage.setItem("username", formData.username);
+    setIsLoading(true);
+
+    try {
+      console.log('🔐 Attempting secure login...');
+      
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          role: formData.role
+        }),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('✅ Login successful:', data.user);
+        
+        // Save user info to localStorage/session as needed
+        localStorage.setItem("username", data.user.username);
+        localStorage.setItem("userRole", data.user.role);
+        localStorage.setItem("userId", data.user.user_id?.toString() || "");
+        
         toast({
           title: "Welcome back!",
           description: "Logging you in..."
         });
-        setTimeout(() => {
-          navigate('/assistant');
-        }, 1000);
+        
+        if (data.user && data.user.role === formData.role) {
+          toast({
+            title: "Account Setup Complete!",
+            description: "Welcome to Wheely Assistant"
+          });
+          setTimeout(() => {
+            navigate('/assistant');
+          }, 1000);
+        } else {
+          toast({
+            title: "Role Mismatch",
+            description: "Your selected role does not match your assigned role.",
+            variant: "destructive"
+          });
+        }
       } else {
+        console.error('❌ Login failed:', data.message);
         toast({
           title: "Invalid Credentials",
-          description: result.message || "Username, password, or role is incorrect.",
+          description: data.message || "Username, password, or role is incorrect.",
           variant: "destructive"
         });
       }
     } catch (error) {
+      console.error('❌ Login error:', error);
       toast({
         title: "Login Failed",
         description: "Could not connect to server.",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-            <Bot className="h-8 w-8 text-white" />
+          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+          <img src="public/logo.png" alt="Wheely Logo" className="h-54 w-54" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
           <p className="text-gray-600">Sign in to your account</p>
@@ -92,7 +125,8 @@ const Login = () => {
                   value={formData.username}
                   autoComplete="new-username"
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+                  className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -109,7 +143,8 @@ const Login = () => {
                     value={formData.password}
                     autoComplete="new-password"  
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500 pr-10"
+                    className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500 pr-10"
+                    disabled={isLoading}
                   />
                   <Button
                     type="button"
@@ -117,6 +152,7 @@ const Login = () => {
                     size="sm"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -127,14 +163,18 @@ const Login = () => {
                 <Label htmlFor="role" className="text-sm font-medium text-gray-700">
                   Role
                 </Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500">
+                <Select 
+                  value={formData.role} 
+                  onValueChange={(value) => setFormData({...formData, role: value})}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500">
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="dealer">Dealer</SelectItem>
-                    <SelectItem value="sales_rep">Salesrep</SelectItem>
+                    <SelectItem value="sales_rep">Sales Rep</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -142,7 +182,8 @@ const Login = () => {
               <div className="flex items-center justify-between text-sm">
                 <button
                   type="button"
-                  className="text-orange-600 hover:text-orange-700 font-medium"
+                  className="text-gray-500 hover:text-gray-900 font-medium"
+                  disabled={isLoading}
                 >
                   Forgot Password?
                 </button>
@@ -150,9 +191,10 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-lg"
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-gray-500 to-gray-900 hover:from-gray-700 hover:to-gray-1100 text-white font-medium rounded-lg shadow-lg"
               >
-                Sign In
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
 
               <div className="text-center text-sm text-gray-600">
@@ -160,7 +202,8 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/signup')}
-                  className="text-orange-600 hover:text-orange-700 font-medium"
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                  disabled={isLoading}
                 >
                   Sign up
                 </button>
