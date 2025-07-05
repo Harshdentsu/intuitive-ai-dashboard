@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -31,11 +30,13 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-verification-email', {
-        body: { email }
+      // Request backend to send verification link (token will be generated and stored in DB)
+      const response = await fetch('http://localhost:8000/api/send-verification-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
-
-      if (error) throw error;
+      const data = await response.json();
 
       if (data.success) {
         setEmailSent(true);
@@ -64,11 +65,11 @@ const Signup = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-              <Mail className="h-8 w-8 text-white" />
+            <div className="mx-auto mb-4 w-12 h-12  bg-gradient-to-r from-gray-500 to-gray-900 rounded-full flex items-center justify-center shadow-lg">
+              <Mail className="h-8 w-8 text-white " />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h1>
             <p className="text-gray-600">We've sent a verification link to your email</p>
@@ -78,7 +79,7 @@ const Signup = () => {
             <CardContent className="p-8 text-center">
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Verification email sent to:</h3>
-                <p className="text-orange-600 font-medium">{email}</p>
+                <p className="text-blue-600 font-medium">{email}</p>
               </div>
               
               <div className="space-y-4">
@@ -111,7 +112,7 @@ const Signup = () => {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="text-orange-600 hover:text-orange-700 font-medium"
+              className="text-blue-600 font-medium"
             >
               Sign in
             </button>
@@ -122,11 +123,11 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-            <Bot className="h-8 w-8 text-white" />
+          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+          <img src="public/logo.png" alt="Wheely Logo" className="h-54 w-54" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
           <p className="text-gray-600">Join the Wheely Assistant</p>
@@ -149,7 +150,7 @@ const Signup = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+                  className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                   disabled={isLoading}
                 />
               </div>
@@ -157,7 +158,7 @@ const Signup = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-lg"
+                className="w-full h-12 bg-gradient-to-r from-gray-500 to-gray-900 hover:from-gray-600 hover:to-gray-900 text-white font-medium rounded-lg shadow-lg"
               >
                 {isLoading ? "Sending..." : "Send Verification Link"}
               </Button>
@@ -168,7 +169,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="text-orange-600 hover:text-orange-700 font-medium"
+                className="text-gray-600 hover:text-gray-700 font-medium"
               >
                 Sign in
               </button>
