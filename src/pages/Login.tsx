@@ -21,79 +21,80 @@ const Login = () => {
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.username || !formData.password || !formData.role) {
+  e.preventDefault();
+
+  if (!formData.username || !formData.password || !formData.role) {
+    toast({
+      title: "Missing Information",
+      description: "Please fill in all fields",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    // 🔐 Hardcoded login check for harsh
+    if (
+      formData.username === "harsh" &&
+      formData.password === "harsh" &&
+      formData.role === "dealer"
+    ) {
+      localStorage.setItem("username", "harsh");
+      localStorage.setItem("userRole", "dealer");
+
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields",
-        variant: "destructive"
+        title: "Welcome Harsh!",
+        description: "Access granted. Redirecting...",
       });
+
+      setTimeout(() => {
+        navigate("/assistant");
+      }, 1000);
+
       return;
     }
 
-    setIsLoading(true);
+    // ❌ If not harsh, do normal API login
+    const response = await fetch("http://localhost:8000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    const data = await response.json();
 
-    try {
-      console.log('🔐 Attempting secure login...');
-      
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-          role: formData.role
-        }),
-      });
-      const data = await response.json();
+    if (data.success) {
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userId", data.user.user_id?.toString() || "");
 
-      if (data.success) {
-        console.log('✅ Login successful:', data.user);
-        
-        // Save user info to localStorage/session as needed
-        localStorage.setItem("username", data.user.username);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userId", data.user.user_id?.toString() || "");
-        
-        toast({
-          title: "Welcome back!",
-          description: "Logging you in..."
-        });
-        
-        if (data.user && data.user.role === formData.role) {
-          toast({
-            title: "Account Setup Complete!",
-            description: "Welcome to Wheely Assistant"
-          });
-          setTimeout(() => {
-            navigate('/assistant');
-          }, 1000);
-        } else {
-          toast({
-            title: "Role Mismatch",
-            description: "Your selected role does not match your assigned role.",
-            variant: "destructive"
-          });
-        }
-      } else {
-        console.error('❌ Login failed:', data.message);
-        toast({
-          title: "Invalid Credentials",
-          description: data.message || "Username, password, or role is incorrect.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('❌ Login error:', error);
       toast({
-        title: "Login Failed",
-        description: "Could not connect to server.",
-        variant: "destructive"
+        title: "Welcome back!",
+        description: "Logging you in...",
       });
-    } finally {
-      setIsLoading(false);
+
+      setTimeout(() => {
+        navigate("/assistant");
+      }, 1000);
+    } else {
+      toast({
+        title: "Invalid Credentials",
+        description: data.message || "Username, password, or role is incorrect.",
+        variant: "destructive",
+      });
     }
-  };
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    toast({
+      title: "Login Failed",
+      description: "Could not connect to server.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
