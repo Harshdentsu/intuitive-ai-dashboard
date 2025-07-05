@@ -1,317 +1,185 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Bot,
-  Send,
-  Menu,
-  X,
-  Plus,
-  Search,
-  MoreHorizontal,
-  User,
-  Settings,
-  LogOut,
-  MessageSquare,
-  Sparkles,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Bot, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import ReactMarkdown from "react-markdown";
-import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "assistant";
-  timestamp: Date;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-  lastMessage: string;
-  timestamp: Date;
-  messages: Message[];
-}
-
-const Assistant = () => {
+const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    role: ""
+  });
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(false);
-  const [currentInput, setCurrentInput] = useState("");
-  const [currentChatId, setCurrentChatId] = useState("1");
-  const [isTyping, setIsTyping] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [animatedContent, setAnimatedContent] = useState("");
-  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(
-    null
-  );
+  const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const rawUsername = "harsh.dealer";
-  const firstName = rawUsername.split(".")[0];
-  const lastName = rawUsername.split(".")[1];
-  const initials = `${firstName[0]?.toUpperCase()}${lastName[0]?.toUpperCase()}`;
-  const displayName =
-    firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  if (!formData.username || !formData.password || !formData.role) {
+    toast({
+      title: "Missing Information",
+      description: "Please fill in all fields",
+      variant: "destructive"
+    });
+    return;
+  }
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  setIsLoading(true);
 
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: "1",
-      title: "New Thread",
-      lastMessage: "",
-      timestamp: new Date(),
-      messages: [],
-    },
-  ]);
-
-  const currentChat = chats.find((chat) => chat.id === currentChatId);
-  const filteredChats = chats.filter(
-    (chat) =>
-      chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const hasMessages = currentChat?.messages.length > 0;
-  const showGreeting =
-    !hasMessages && !inputFocused && !currentInput.trim();
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChat?.messages.length]);
-
-  const animateMarkdownMessage = (fullText: string, messageId: string) => {
-    setAnimatedContent("");
-    setAnimatingMessageId(messageId);
-
-    let i = 0;
-    const chunkSize = 4;
-    const interval = setInterval(() => {
-      setAnimatedContent(fullText.slice(0, i + chunkSize));
-      i += chunkSize;
-      if (i >= fullText.length) {
-        clearInterval(interval);
-        setAnimatingMessageId(null);
-        setAnimatedContent("");
-      }
-    }, 16);
-  };
-
-  const handleSendMessage = () => {
-    if (!currentInput.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: currentInput,
-      sender: "user",
-      timestamp: new Date(),
-    };
-
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === currentChatId
-          ? {
-              ...chat,
-              messages: [...chat.messages, userMessage],
-            }
-          : chat
-      )
-    );
-
-    setCurrentInput("");
-    setInputFocused(false);
-    setIsTyping(true);
-    setShowRightPanel(true);
-
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content:
-          "I'm here to help you with any questions. This is a simulated response.",
-        sender: "assistant",
-        timestamp: new Date(),
-      };
-
-      animateMarkdownMessage(assistantMessage.content, assistantMessage.id);
-
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, assistantMessage],
-                lastMessage:
-                  assistantMessage.content.substring(0, 50) + "...",
-                title: userMessage.content.substring(0, 30) + "...",
-              }
-            : chat
-        )
-      );
-
-      setIsTyping(false);
-    }, 1200);
-  };
-
-  const handleNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: "New Thread",
-      lastMessage: "",
-      timestamp: new Date(),
-      messages: [],
-    };
-
-    setChats((prev) => [newChat, ...prev]);
-    setCurrentChatId(newChat.id);
-    setInputFocused(false);
-    setCurrentInput("");
-    setShowRightPanel(false);
+  // 🔐 Hardcoded login check
+  if (
+    formData.username === "harsh" &&
+    formData.password === "harsh" &&
+    formData.role === "dealer"
+  ) {
+    localStorage.setItem("username", "harsh");
+    localStorage.setItem("userRole", "dealer");
 
     toast({
-      title: "New Thread Created",
-      description: "Start a fresh conversation",
+      title: "Welcome Harsh!",
+      description: "Access granted. Redirecting...",
     });
-  };
 
-  const handleDeleteChat = (chatId: string) => {
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-    if (currentChatId === chatId && chats.length > 1) {
-      setCurrentChatId(chats.find((chat) => chat.id !== chatId)?.id || "");
-    }
-
+    navigate("/assistant"); // 🔁 Direct navigation
+  } else {
     toast({
-      title: "Thread Deleted",
-      description: "The conversation has been removed",
+      title: "Access Denied",
+      description: "Only Harsh with role dealer is allowed.",
+      variant: "destructive"
     });
-  };
+  }
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-    navigate("/login");
-  };
+  setIsLoading(false);
+};
 
-  const handleSuggestedQuery = (query: string) => {
-    setCurrentInput(query);
-    setInputFocused(true);
-    setShowRightPanel(true);
-  };
-
-  const suggestedQueries = [
-    { text: "List all claims I've raised", icon: "📄" },
-    { text: "Specification about product UrbanBias", icon: "🔧" },
-    { text: "Available quantity of 100/45R29 73H in Mysore", icon: "🏬" },
-    { text: "Show me my sales.", icon: "📊" },
-  ];
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 dark:text-white flex overflow-hidden">
-      {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-80" : "w-0"
-        } transition-all duration-300 bg-white dark:bg-gray-800 dark:text-white border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden shadow-sm`}
-      >
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <Button
-            onClick={handleNewChat}
-            className="w-full bg-black hover:bg-gray-800 text-white h-12 rounded-xl font-medium"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Thread
-          </Button>
-        </div>
-
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search thread"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-50 border-gray-200 h-10 rounded-lg focus:bg-white"
-            />
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+          <img src="public/logo.png" alt="Wheely Logo" className="h-54 w-54" />
           </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
+          <p className="text-gray-600">Sign in to your account</p>
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-2 space-y-1">
-              {filteredChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
-                    currentChatId === chat.id
-                      ? "bg-gray-100 border border-gray-200"
-                      : ""
-                  }`}
-                  onClick={() => setCurrentChatId(chat.id)}
-                >
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <MessageSquare className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {chat.title}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-300 truncate">
-                        {chat.lastMessage || "No messages yet"}
-                      </div>
-                    </div>
-                  </div>
+        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-xl">Sign In</CardTitle>
+            <CardDescription>Enter your credentials to continue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  name="username"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  autoComplete="new-username"
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                  disabled={isLoading}
+                />
+              </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                      >
-                        <MoreHorizontal className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg dark:text-white">
-                      <DropdownMenuItem>Rename Thread</DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteChat(chat.id)}
-                        className="text-red-600 dark:text-red-400"
-                      >
-                        Delete Thread
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    autoComplete="new-password"  
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500 pr-10"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+                  Role
+                </Label>
+                <Select 
+                  value={formData.role} 
+                  onValueChange={(value) => setFormData({...formData, role: value})}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="dealer">Dealer</SelectItem>
+                    <SelectItem value="sales_rep">Sales Rep</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-900 font-medium"
+                  disabled={isLoading}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-gray-500 to-gray-900 hover:from-gray-700 hover:to-gray-1100 text-white font-medium rounded-lg shadow-lg"
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
+              </Button>
+
+              <div className="text-center text-sm text-gray-600">
+                New user?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate('/signup')}
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                  disabled={isLoading}
+                >
+                  Sign up
+                </button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Chat area will continue here... */}
-      {/* Add your existing chat UI from previous code after this line */}
-
     </div>
   );
 };
 
-export default Assistant;
+export default Login;
